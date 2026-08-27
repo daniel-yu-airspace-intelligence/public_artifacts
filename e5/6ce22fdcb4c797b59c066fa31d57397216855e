@@ -1,0 +1,26 @@
+index.html
+  f8fb1b59880e54ba 1-4
+scripts/build_index.sh
+  f8fb1b59880e54ba 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.5",
+  "base_commit_sha": "e56ce22fdcb4c797b59c066fa31d57397216855e",
+  "prompts": {
+    "f8fb1b59880e54ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ccda115b-cacd-44c2-bb80-937b27a8e793",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Daniel Yu",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0,
+      "messages_url": "https://uni-git-ai-cas.sre.aws.ai-internal.com//cas/09013d61ac7af1ec240d7e78ba8f8891d8c717a97b1340ea91c31f4f7764f79a"
+    }
+  }
+}
