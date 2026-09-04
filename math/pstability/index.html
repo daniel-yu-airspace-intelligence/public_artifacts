@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P-stability · why the switch chain mixes fast</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}]})"></script>
+<style>
+@font-face{font-family:'Simplon ASI Norm';src:url('fonts/SimplonASINorm-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Simplon ASI Norm';src:url('fonts/SimplonASINorm-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Simplon ASI Mono';src:url('fonts/SimplonASIMono-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Simplon ASI Caps Norm';src:url('fonts/SimplonASICapsNorm-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+:root{--bg:#181b20;--bg-recessed:#070709;--surf:#1e2229;--surf2:#23272f;--surf3:#2b303b;--hair:#343a46;--hair-s:#4a5264;--fg1:#f3f4f7;--fg2:#afb8ca;--fg3:#838fa5;--dis:#646f87;--accent:#ccff00;--accent-dim:#8bad00;--accent-fg:#343a46;--high:#ff2929;--caution:#ffb829;--info:#2970ff;--sky:#29b8ff;--pink:#ff2994;--sans:'Simplon ASI Norm','Inter Tight',system-ui,sans-serif;--caps:'Simplon ASI Caps Norm','Simplon ASI Norm',system-ui,sans-serif;--mono:'Simplon ASI Mono','SF Mono',ui-monospace,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg1);font-family:var(--sans);font-size:14px;line-height:20px;letter-spacing:.03em;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+a{color:var(--sky);text-decoration:none}a:hover{color:#7fd2ff}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+header{border-bottom:1px solid var(--hair);padding:18px 0}
+header .wrap{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.lbl{font-family:var(--caps);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--fg3)}
+.hero{padding:72px 24px 40px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end}
+h1{font-weight:500;font-size:40px;line-height:44px;letter-spacing:0;margin:12px 0 0;text-wrap:pretty}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{font-size:16px;line-height:24px;color:var(--fg2);text-wrap:pretty;margin:0}
+h2{font-weight:500;font-size:24px;line-height:28px;letter-spacing:0;margin:0 0 8px;text-wrap:pretty}
+p{color:var(--fg2);margin:0 0 12px;text-wrap:pretty}
+p b{color:var(--fg1);font-weight:500}
+code,.mono{font-family:var(--mono);font-size:13px;color:var(--fg1)}
+section.stage{border-top:1px solid var(--hair);padding:56px 0}
+.stage .wrap{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:40px;align-items:start}
+.stage.flip .wrap{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
+.stage.flip .viz{order:2}
+.num{font-family:var(--mono);color:var(--accent);font-size:12px;letter-spacing:.08em;margin-bottom:10px;display:block}
+.viz{background:var(--bg-recessed);border:1px solid var(--hair);position:relative}
+.viz canvas{display:block;width:100%;height:auto}
+.bar{display:flex;gap:1px;background:var(--hair);border-top:1px solid var(--hair);flex-wrap:wrap}
+.bar>*{background:var(--surf);padding:0 12px;height:32px;display:flex;align-items:center;gap:8px;font-family:var(--caps);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--fg2);flex:0 0 auto}
+.bar .grow{flex:1 1 auto}
+button{white-space:nowrap;font:inherit;font-family:var(--caps);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--fg1);background:var(--surf3);border:0;border-right:1px solid var(--hair);height:32px;padding:0 14px;cursor:pointer}
+button:hover{background:var(--hair-s)}
+button.on{background:var(--accent);color:var(--accent-fg)}
+button.on:hover{background:#deff5c}
+.stat{font-family:var(--mono);color:var(--fg1);letter-spacing:.02em}
+.stat.acc{color:var(--accent)}
+input[type=range]{accent-color:var(--accent);width:120px;height:32px;margin:0}
+.seg{display:flex;gap:1px}
+.seg button{border-right:1px solid var(--hair)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.legend span{display:flex;align-items:center;gap:6px;font-family:var(--caps);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--fg3)}
+.legend i{display:inline-block;width:10px;height:10px}
+.formula{font-size:15px;color:var(--fg1);background:var(--surf);border:1px solid var(--hair);padding:14px 16px;margin:12px 0;line-height:22px}
+.formula .katex-display{margin:6px 0;overflow-x:auto;overflow-y:hidden}.formula .d{color:var(--fg3);font-size:12px;font-family:var(--caps);text-transform:uppercase;letter-spacing:.08em;display:block;margin-top:6px}
+.katex{font-size:1.05em}
+details.note{border:1px solid var(--hair);background:var(--surf);margin:12px 0}
+details.note summary{cursor:pointer;list-style:none;padding:10px 14px;font-family:var(--caps);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--fg2);display:flex;justify-content:space-between}
+details.note summary::after{content:'+';color:var(--fg3)}details.note[open] summary::after{content:'−'}
+details.note summary:hover{background:var(--surf3)}
+details.note ol{margin:0;padding:4px 14px 8px 30px;color:var(--fg2)}details.note li{margin:0 0 10px;text-wrap:pretty}details.note li::marker{color:var(--fg3);font-family:var(--mono)}
+details.note>p{padding:0 14px 12px;color:var(--fg2);text-wrap:pretty}details.note>.formula{margin:0 14px 12px}
+.caveats{border-top:1px solid var(--hair);padding:56px 0}
+.caveats .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);margin-top:20px}
+.caveats .grid div{background:var(--surf);padding:20px}
+.caveats h3{font-family:var(--caps);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--fg3);font-weight:400;margin:0 0 8px}
+footer{border-top:1px solid var(--hair);padding:24px 0;color:var(--fg3);font-size:12px}
+@media(max-width:860px){.hero,.stage .wrap,.stage.flip .wrap,.caveats .grid{grid-template-columns:1fr}.stage.flip .viz{order:0}h1{font-size:32px;line-height:36px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><span class="lbl">Degree-preserving null models · visual explainer</span><span class="lbl mono" id="clock">P-STABILITY → RAPID MIXING</span></div></header>
+
+<div class="wrap hero">
+  <div>
+    <h1>Sampling uniformly from the realizations of a degree sequence. <em>P-stability says the switch chain is rapidly mixing.</em></h1></div>
+  <p class="lede">A null model asks: is this network's structure surprising, or a consequence of the connections on each node (i.e. the degrees)? This is no different from any other statistical question: generate many random networks with the <b>same degree sequence</b> and compare. P-stability is the guarantee that you can sample a random graph from the starting graph in polynomial time.</p>
+</div>
+
+<section class="stage" id="s1"><div class="wrap">
+  <div class="viz"><canvas id="c1" width="1120" height="620"></canvas>
+    <div class="bar"><button id="b1step">Switch</button><button id="b1hinge">Hinge flip</button><button id="b1play">Play</button><button id="b1reset">Reset</button><span class="grow"></span><span>Steps <span class="stat" id="s1steps">0</span></span><span>Edges changed <span class="stat acc" id="s1dist">0 / 0</span></span></div></div>
+  <div><h2>The switch move keeps every degree fixed</h2>
+    <p>Left: a bipartite network — rows connected to columns. Right: the same network as an adjacency matrix. The <b>degree sequence</b> is the row and column sums in the margins.</p>
+    <p>A <b>switch</b> picks two edges <code>(i,a)</code> and <code>(j,b)</code> whose crossed pairs are absent, and swaps endpoints. Two cells go dark, two light up, and every margin stays exactly the same.</p>
+    <details class="note"><summary>Hinge flips and the switch</summary><p>A switch is really two <b>hinge flips</b> in a row. One hinge flip moves a single edge endpoint, <code>(i,a) → (i,b)</code>: column <code>a</code> loses a degree, column <code>b</code> gains one, and the network briefly has a neighbouring degree sequence \(d'\) at L1-distance 2 from \(d\). The second flip moves it back. P-stability is a statement about exactly these neighbouring sequences: \(\Omega(d')\) is never much larger than \(\Omega(d)\), so a chain that wanders through them spends most of its time in \(\Omega(d)\) itself — which is how the guarantee transfers to the switch chain.</p></details>
+    <p>Every network reachable this way is a <b>realization</b> of the same degree sequence. Their set, \(\Omega(d)\), is finite but astronomically large. The starting network is one point in it.</p>
+    <div class="legend"><span><i style="background:var(--accent)"></i>added</span><span><i style="background:var(--high)"></i>removed</span><span><i style="background:var(--caution)"></i>margin off by one</span><span><i style="background:var(--fg1)"></i>present</span></div></div>
+</div></section>
+
+<section class="stage flip" id="s2"><div class="wrap">
+  <div><h2>P-stability: a state space without bottlenecks</h2>
+    <p>Think of \(\Omega(d)\) as a state space where every <b>state is one whole network</b> — a complete realization of \(d\) — and a switch is one step from a realization to a neighbouring one. Then a random walk composed of these steps <b>mixes fast</b> when the state space is well-connected and slowly when there are <b>bottlenecks</b>.</p>
+    <details class="note"><summary>How P-stability rules out bottlenecks</summary>
+    <p><b>How do you prove there are no bottlenecks?</b> With a <b>canonical-path argument</b>: pick one route (a sequence of switches) between every pair of states, then check that no single state is crossed by too many routes (the <b>congestion</b> \(\rho\)) and that no route is too long (\(\ell\)). If routes are spread evenly, the state space has no narrow passage, and a random walk cannot get stuck. Those two numbers bound the mixing time:</p>
+    <div class="formula">$$T(\epsilon) \le \rho(f)\,\ell(f)\,\ln\!\left(\frac{|\Omega(d)|}{\epsilon}\right)$$<span class="d">ρ(f) flow congestion · ℓ(f) longest canonical path · T(ε) steps to within ε of uniform</span></div>
+    <p><b>Where P-stability comes in.</b> Bounding the congestion means counting the routes that cross a given state \(Z\). The standard trick: any route crossing \(Z\) can be reconstructed from \(Z\) plus a "leftover" network. That leftover is not a realization of \(d\) — it is a realization of a slightly perturbed sequence \(d'\), off by one or two degrees, which is exactly what a hinge flip produces. So the number of routes through \(Z\) is at most \(\mathrm{poly}(n)\cdot|\Omega(d')|\). P-stability caps that count:</p>
+    <div class="formula">$$|\Omega(d')| \le p(n)\cdot|\Omega(d)|$$</div>
+    <p>No state carries more than a polynomial multiple of its fair share of routes, so the congestion is polynomial, so the switch chain has no bottleneck and mixes in polynomially many steps.</p>
+    </details>
+    <details class="note"><summary>The counting argument in detail</summary>
+      <ol>
+        <li>A canonical path from \(X\) to \(Y\) is a fixed sequence of switches, so every intermediate state is itself a realization in \(\Omega(d)\). The walk never leaves \(\Omega(d)\).</li>
+        <li>Congestion counts paths through a state \(Z\). An encoding argument reconstructs any such path from \(Z\) plus one "leftover" network \(\eta = X \oplus Y \oplus Z\) (the symmetric difference of the three edge sets), plus \(O(n^2)\) bits of bookkeeping. Because \(Z\) sits partway along the route, \(\eta\) is not in \(\Omega(d)\): its degrees are off by one or two at a handful of vertices, so \(\eta\in\Omega(d'')\) for some \(d''\) at L1-distance \(\le 2\) from \(d\). Hence \(\#\text{paths through }Z \le \mathrm{poly}(n)\,|\Omega(d'')|\).</li>
+        <li>Without P-stability, \(|\Omega(d'')|\) could be exponentially larger than \(|\Omega(d)|\). P-stability gives \(|\Omega(d'')| \le p(n)\,|\Omega(d)|\); since each state carries weight \(\sim 1/|\Omega(d)|\), the congestion is \(\rho \le \mathrm{poly}(n)\,p(n)\).</li>
+        <li>Path length is polynomial for free: \(\ell \le\) number of edges on which \(X\) and \(Y\) differ \(= O(n^2)\).</li>
+        <li>\(\ln|\Omega(d)| \le O(n^2)\) since there are at most \(2^{n^2}\) matrices. Multiply: \(T(\epsilon)\) is polynomial in \(n\); the large exponent is the product of the polynomials above.</li>
+      </ol>
+      <p>The perturbed sequences \(d''\) appear only in the encodings used to count routes — never as states of the chain.</p>
+    </details>
+    <p>300 walkers start at the same realization in both state spaces. Watch how far each population is from uniform.</p></div>
+  <div class="viz"><canvas id="c2" width="1120" height="560"></canvas>
+    <div class="bar"><button id="b2play">Play</button><button id="b2reset">Reset</button><button id="b2paths">Paths</button><span class="grow"></span><span>Step <span class="stat" id="s2steps">0</span></span><span>Distance to uniform <span class="stat acc" id="s2tvA">1.00</span> · <span class="stat" id="s2tvB" style="color:var(--high)">1.00</span></span></div></div>
+</div></section>
+
+<section class="stage" id="s3"><div class="wrap">
+  <div class="viz"><canvas id="c3" width="1120" height="560"></canvas>
+    <div class="bar"><button id="b3run">Sample</button><button id="b3reset">Reset</button><span>Steps per chain <code>T</code> <input type="range" id="r3T" min="0" max="7" step="1" value="1"><span class="stat" id="s3T">8</span></span><span class="grow"></span><span>N <span class="stat" id="s3n">0</span></span><span>z <span class="stat acc" id="s3z">—</span></span><span>p <span class="stat" id="s3p">—</span></span></div></div>
+  <div><h2>Too few steps and the test quietly lies</h2>
+    <p>Run <code>N</code> independent chains from the observed network, each for <code>T</code> steps, and measure a statistic on every sample — here <b>community structure</b>: the share of edges that fall inside the two known groups (a simple modularity). Together the sampled values form the <b>null distribution</b>.</p>
+    <p>With a small <code>T</code> the samples are still close relatives of the starting network: the histogram hugs the observed value and <code>z</code> collapses toward 0 — the test says "nothing unusual" whether or not something is. Nothing in the p-value reveals this.</p>
+    <p>With <code>T</code> at the proven mixing bound, samples are approximately uniform draws from <code>Ω(d)</code> and the comparison means what it claims:</p>
+    <div class="formula">$$z = \frac{f(G_{\text{obs}}) - \bar f}{s_f}$$$$p = \frac{\#\{i : f(M_i) \ge f(G_{\text{obs}})\} + 1}{N + 1}$$</div>
+    <div class="legend"><span><i style="background:var(--fg2)"></i>null samples</span><span><i style="background:var(--accent)"></i>observed</span></div></div>
+</div></section>
+
+<section class="caveats"><div class="wrap"><span class="lbl">Practical caveats</span>
+  <div class="grid">
+    <div><h3>The bound is loose</h3><p>Canonical-path polynomials carry large exponents (\(O(n^{13})\) for general degree sequences, where \(n\) is the number of vertices). In practice P-stability is used qualitatively: it certifies the true mixing time is polynomial, which justifies trusting a cheap empirical stopping rule.</p></div>
+    <div><h3>Check the null's shape</h3><p>A z-score assumes the null histogram is roughly bell-shaped. Some statistics aren't — algebraic connectivity is exactly 0 for any disconnected sample, so the histogram gets a spike at 0 next to a separate hump. Look at the histogram first; if it isn't bell-shaped, use the rank p-value, which only counts samples at least as extreme as the observed and works for any shape.</p></div>
+    <div><h3>N sets the floor</h3><p>The smallest achievable p-value with \(N\) samples is \(1/(N+1)\). A target threshold fixes a minimum <code>N</code> regardless of how fast sampling is.</p></div>
+  </div></div></section>
+<footer><div class="wrap">Degree sequence · realization · mixing time · P-stable · null model — see the accompanying notes for formal definitions.</div></footer>
+<script src="switch.js"></script>
+<script src="landscape.js"></script>
+<script src="nulltest.js"></script>
+</body>
+</html>
