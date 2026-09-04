@@ -1,0 +1,26 @@
+index.html
+  52b87e359ac72be0 3
+scripts/build_index.sh
+  52b87e359ac72be0 2,9,11-18,20-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.5",
+  "base_commit_sha": "4d4810e5fbbe488ad1d7c1297563b64b70df0ce5",
+  "prompts": {
+    "52b87e359ac72be0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e3a91466-93bd-4153-9de6-c5501fe7eda0",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Daniel Yu",
+      "messages": [],
+      "total_additions": 492,
+      "total_deletions": 4,
+      "accepted_lines": 492,
+      "overriden_lines": 0,
+      "messages_url": "https://uni-git-ai-cas.sre.aws.ai-internal.com//cas/a49c88aaa9ab20fd2454bfb323e9a939c2867287763d1882c37c821781e252ac"
+    }
+  }
+}
