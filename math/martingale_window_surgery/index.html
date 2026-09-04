@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Azuma's inequality — martingale concentration</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<script>
+  window.MathJax = { tex:{ inlineMath:[['\\(','\\)']] }, svg:{ fontCache:'none' }, startup:{ typeset:false },
+    options:{ enableMenu:false } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vsalvino/computer-modern@main/fonts/serif.css">
+<style>
+  mjx-container{color:inherit}
+  mjx-container svg{vertical-align:-0.12em}
+  html,body{margin:0;height:100%;background:#000;color:#ddd;
+    font-family:"Computer Modern Serif","CMU Serif","Latin Modern Roman",Georgia,serif;font-variant-numeric:tabular-nums}
+  three-d-stage:not(:defined){visibility:hidden}
+  three-d-stage{display:block;position:absolute;inset:0}
+  #title{position:absolute;top:30px;left:40px;bottom:120px;width:min(400px,36vw);z-index:5;overflow-y:auto;scrollbar-width:none}
+  #head .t{font-size:28px;color:#fff;line-height:1.2}
+  #head{margin-bottom:22px}
+  #stepno{font-size:16px;color:#777;margin-bottom:8px}
+  #sceneTitle{font-size:28px;line-height:1.25;color:#fff}
+  #sceneTitle mjx-container{font-size:108%!important}
+  .defs{display:grid;gap:5px;margin-top:14px}
+  .def{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline;font-size:16px}
+  .def .k{color:#777}
+  .def .v{color:#ddd}
+  .note,.stepline{margin-top:12px;font-size:17px;line-height:1.45;color:#bbb;text-wrap:pretty}
+  .note b,.stepline b{color:#fff;font-weight:400}
+  #scene2{display:none!important}
+  #bar{position:absolute;bottom:0;left:0;right:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;
+    gap:6px 22px;padding:8px 40px 12px}
+  #bar button{appearance:none;background:transparent;border:0;color:#888;font-family:inherit;font-size:17px;
+    padding:2px 0;cursor:pointer;transition:color 150ms}
+  #bar button:hover{color:#fff}
+  #bar button.sel{color:#ffff00}
+  #bar .read{display:flex;align-items:center;gap:26px}
+  #bar .cell{display:grid;gap:0;white-space:nowrap}
+  #bar .cell .cap{font-size:13px;color:#777}
+  #bar .cell .v{font-size:19px;color:#fff}
+  #bar .cell .v.acc{color:#ffff00}
+  #omax,#flag{font-size:12px;color:#666;min-height:14px}
+  #scrubwrap{display:flex;align-items:center}
+  input[type=range]{height:2px}
+  #scrub{width:150px;accent-color:#ffff00}
+  #yr{appearance:none;background:transparent;color:#bbb;border:0;border-bottom:1px solid #444;border-radius:0;
+    font-family:inherit;font-size:14px;padding:1px 4px}
+  #keys{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;width:100%}
+  .key{display:flex;align-items:center;gap:8px}
+  .key .sw{width:22px;height:3px;border-radius:2px;flex:0 0 auto}
+  .key .n{font-size:13px;color:#999;white-space:nowrap}
+  #chDots{display:flex;align-items:center;gap:8px}
+  #chDots i{width:8px;height:8px;border-radius:50%;background:#444;display:block;cursor:pointer;transition:background 150ms}
+  #chDots i:hover{background:#888}
+  #chDots i.on{background:#ffff00}
+</style>
+</head>
+<body>
+<three-d-stage name="azuma-martingale" background="#000000"></three-d-stage>
+
+<div id="title">
+  <div id="head">
+    <div class="t">Azuma–Hoeffding inequality</div>
+    <div class="defs">
+      <div class="def"><div class="k">martingale</div><div class="v">\(\mathbb{E}\!\left[M_\ell \mid \mathcal{F}_{\ell-1}\right] = M_{\ell-1}\)</div></div>
+      <div class="def"><div class="k">bounded differences</div><div class="v">\(\left|M_\ell - M_{\ell-1}\right| \le c\)</div></div>
+      <div class="def"><div class="k">Azuma</div><div class="v">\(\Pr\!\left(|M_k - M_0| \ge \lambda\right) \le 2\exp\!\left(-\dfrac{\lambda^2}{2kc^2}\right)\)</div></div>
+      <div class="def"><div class="k">envelope</div><div class="v">\(\lambda = \theta\,c\sqrt{k}\ \Rightarrow\ \Pr \le 2e^{-\theta^2/2}\)</div></div>
+    </div>
+  </div>
+  <div id="stepno" style="display:none"></div>
+  <div id="sceneTitle">On screen now</div>
+  <div class="defs" id="sceneDefs"></div>
+  <div class="note" id="sceneNote"></div>
+  <div id="scene2"><div id="scene2Title"></div><div id="scene2Defs"></div><div id="scene2Note"></div></div>
+</div>
+
+<section id="bar">
+  <button id="viewWalk" class="view sel">Walk</button>
+  <button id="viewLemma" class="view">Lemma</button>
+  <button id="play">Pause</button>
+  <button id="restart">Restart</button>
+  <button id="chPrev" class="view" style="display:none">‹ Back</button>
+  <div id="chDots" style="display:none"></div>
+  <button id="chNext" class="view" style="display:none">Next ›</button>
+  <div class="read" id="stepRead">
+    <div class="cell"><div class="cap" id="capStep">Step</div><div class="v" id="rk">00 / 40</div></div>
+    <div class="cell"><div class="cap" id="capDev">Deviation</div><div class="v acc" id="rd">0</div></div>
+    <div class="cell" id="cellAbs" style="display:none"><div class="cap" id="capAbs">Mean</div><div class="v" id="ra">—</div></div>
+  </div>
+  <div id="scrubwrap"><input id="scrub" type="range" min="0" max="40" step="0.05" value="0"></div>
+  <div class="read" id="lamRead">
+    <div class="cell"><div class="cap">tail level \(\theta\) in \(\lambda = \theta\,c\sqrt{k}\)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input id="lam" type="range" min="0.4" max="4" step="0.02" value="2.6" style="width:110px;accent-color:#58c4dd">
+        <div class="v" id="rl" style="color:#58c4dd">2.60</div>
+      </div></div>
+    <div class="cell"><div class="cap">Azuma bound · leaves</div><div class="v" id="rp">≤ 6.8%</div><div id="flag"></div></div>
+    <div class="cell"><div class="cap">observed · 4000 samples</div><div class="v" id="ro" style="color:#83c167">0.0%</div><div id="omax"></div></div>
+  </div>
+  <div id="keys">
+    <div class="key"><div class="n">value axis</div><select id="yr"></select></div>
+    <div class="key" data-lay="union"><div class="sw" style="background:#ffff00;height:9px"></div><div class="n">vertex shown good</div></div>
+    <div class="key" data-lay="union"><div class="sw" style="background:#fc6255;height:9px"></div><div class="n">accumulated failure \(n\varepsilon\)</div></div>
+    <div class="key" data-lay="union"><div class="sw" style="background:#83c167;height:9px"></div><div class="n">failure budget</div></div>
+    <div class="key" data-lay="hyper"><div class="sw" style="background:#ffff00;height:9px;opacity:.5"></div><div class="n">triple through \(v\)</div></div>
+    <div class="key" data-lay="hyper"><div class="sw" style="background:#999;height:9px;opacity:.45"></div><div class="n">other triple of \(H\)</div></div>
+    <div class="key" data-lay="triples"><div class="sw" style="background:#999;height:9px;opacity:.45"></div><div class="n">triple \(\{v,u,w\}\) of \(H\)</div></div>
+    <div class="key" data-lay="triples"><div class="sw" style="background:#ffff00"></div><div class="n">its link edge \(uw\)</div></div>
+    <div class="key" data-lay="focal"><div class="sw" style="background:#ffff00"></div><div class="n" id="keyFocal">tracked path</div></div>
+    <div class="key" data-lay="ens"><div class="sw" style="background:#777"></div><div class="n">ensemble · 8 runs</div></div>
+    <div class="key" data-lay="env"><div class="sw" style="background:#58c4dd"></div><div class="n">envelope \(\pm\lambda\)</div></div>
+    <div class="key" data-lay="bad"><div class="sw" style="background:#fc6255"></div><div class="n" id="keyExtreme">extreme run</div></div>
+    <div class="key" data-lay="env"><div class="sw" style="background:#58c4dd;height:9px;opacity:.35"></div><div class="n">inside \(\pm\lambda\)</div></div>
+    <div class="key" data-lay="env"><div class="sw" style="background:#fc6255;height:9px;opacity:.3"></div><div class="n">escape region · Azuma bounds its probability</div></div>
+    <div class="key" data-lay="gates"><div class="sw" style="background:#ffff00;height:9px;opacity:.35"></div><div class="n" id="keyGate">step gate \(\pm c\)</div></div>
+    <div class="key" data-lay="band"><div class="sw" style="background:#83c167"></div><div class="n">good band · the rails \(r'_v\) must stay between</div></div>
+    <div class="key" data-lay="fv"><div class="sw" style="background:#9a72ac;height:9px;opacity:.6"></div><div class="n">forced-pivot offset \(F_v\)</div></div>
+  </div>
+</section>
+
+<script src="three-d-stage.js"></script>
+<script type="module">
+import * as THREE from 'three';
+
+const stage = document.querySelector('three-d-stage');
+await stage.ready;
+await (document.fonts ? document.fonts.ready : Promise.resolve());
+await MathJax.startup.promise;
+
+/* ================= world geometry (shared by both scenes) ========== */
+const LEN  = 2.48;      // x extent, world units
+const ZH    = 0.46;     // half-depth of the ensemble slab
+const YSPAN = 1.24;     // world half-height of the value axis (both scenes)
+let LAM = 2.6;                                   // lambda = LAM * c * sqrt(k)
+const envC = l => LAM * Math.sqrt(Math.max(0, l) * (S && S.stepScale ? S.stepScale : 1));  // units of c
+const pBound = t => 2 * Math.exp(-t * t / 2);
+
+let yMode = 'env';                 // 'env' fits the envelope, otherwise a fixed +/- N c
+let VIS = 10, YSTEP = 2;
+function niceUp(v){
+  for (const n of [0.5,1,2,3,4,5,6,8,10,12,16,20,25,40,50,80,100,150,200,250,300,400,500]) if (v <= n) return n;
+  return Math.ceil(v / 100) * 100;
+}
+function niceStep(vis){
+  const raw = vis / 5, pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5]) if (raw <= m * pow) return m * pow;
+  return 10 * pow;
+}
+function setScale(){
+  const bandMax = (S.bands && on('band')) ? Math.max(...S.bands.map(b => Math.abs(b.v))) : 0;
+  VIS = yMode === 'env' ? niceUp(Math.max(1, Math.max(envC(S.K), bandMax) * 1.15)) : parseFloat(yMode);
+  YSTEP = niceStep(VIS);
+  S.yu = YSPAN / VIS;
+}
+
+const rng = seed => { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; };
+
+/* ================= scene A — simple random walk ==================== */
+function walkScene(){
+  const K = 40;
+  const step = seed => { const r = rng(seed), y = [0]; for (let k = 1; k <= K; k++) y.push(y[k-1] + (r() < 0.5 ? -1 : 1)); return y; };
+  const inside = seed => {
+    for (let a = 0; a < 400; a++){
+      const y = step(seed + a * 7919);
+      if (y.every((v, k) => k === 0 || Math.abs(v) < 0.78 * 2.6 * Math.sqrt(k))) return y;
+    }
+    return step(seed);
+  };
+  const extreme = () => {                       // legal but rare: drifts to the boundary
+    const y = [0], top = 1.12 * 2.6 * Math.sqrt(K);
+    for (let k = 1; k <= K; k++){
+      const target = top * Math.pow(k / K, 1.25);
+      y.push(y[k-1] + (y[k-1] < target ? 1 : -1));
+    }
+    return y;
+  };
+  return {
+    id: 'walk', K, tickEvery: 10, gates: [6, 16, 28], rate: 5.5, yDefault: 'env',
+    yOptions: ['env','1','2','4','8','16'],
+    sample: rr => { let s = 0; for (let i = 0; i < K; i++) s += rr() < 0.5 ? -1 : 1; return Math.abs(s); },
+    focal: step(31337),
+    ensemble: [-0.40,-0.30,-0.20,-0.10,0.10,0.20,0.30,0.40].map((z, i) => ({ z, vals: inside(7717 + i * 991) })),
+    extreme: { z: -0.34, vals: extreme() },
+    xTitle: 'k\\;\\text{(step)}', yTitle: 'X_k - X_0',
+    stepCap: 'Step \\(k\\)', devCap: '\\(|X_k - X_0|\\)',
+    devFmt: v => Math.round(Math.abs(v)).toString(),
+    keys: { focal: 'Tracked walk', extreme: 'Rare run · drifts out', gate: 'Step gate \\(\\pm 1\\)' },
+    hyper: null,
+    panel: {
+      title: 'Simple random walk',
+      defs: [
+        ['Increments', '\\(\\varepsilon_i = \\pm 1\\) with probability \\(\\tfrac12\\) each'],
+        ['Process', '\\(X_k = \\sum_{i \\le k}\\varepsilon_i,\\quad c = 1,\\ n = 40\\)'],
+        ['Envelope', '\\(\\lambda(k) = \\theta\\sqrt{k},\\ \\theta = \\) <span id="lamTex">2.60</span>']
+      ],
+      note: 'A fair coin each step: martingale, differences bounded by \\(c = 1\\). Nine runs; the red one is legal but unlikely; <span id="kb">it first leaves the funnel at k = 33</span>.'
+    }
+  };
+}
+
+/* ================= scene C — the lemma: link graph in a window ===== */
+function lemmaScene(){
+  const T = 100, KV = 30, DELTA = 1, C1 = 0.25, C2 = 0.75, DENS = 0.5;
+  const CVAL = 2 * (KV - 1);                    // one swap moves Z by at most 2(k_v-1) = 58
+  const K = KV;                                 // one plotted step per revealed vertex
+  const PAIRS = T * (T - 1) / 2;                // C(t,2) = 4950
+  const EZ = DENS * KV * (KV - 1) / 2;          // E[Z] at link density 1/2
+  const BANDC = ((C2 - C1) / 2) * PAIRS / CVAL; // good-band half-width, in units of c
+  const FMAX  = 2 * (KV - 2) / CVAL;            // forced-pivot correction, in units of c
+
+  // an actual link graph on the window: 100 vertices, density 1/2
+  const rr = rng(5077);
+  const ADJ = Array.from({ length: T }, () => new Set());
+  const EDGES = [];
+
+  for (let a = 0; a < T; a++) for (let b = a + 1; b < T; b++)
+    if (rr() < DENS){ ADJ[a].add(b); ADJ[b].add(a); EDGES.push([a, b]); }
+
+  const order = seed => { const r = rng(seed), a = [...Array(T).keys()];
+    for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a; };
+  const eIn = set => { let e = 0; for (const u of set) for (const w of ADJ[u]) if (set.has(w)) e++; return e / 2; };
+
+  // exact Doob path: M_l = E[Z | first l reveals], remaining k-l picks uniform from the pool
+  const doob = perm => {
+    const out = [];
+    for (let l = 0; l <= K; l++){
+      const R = new Set(perm.slice(0, l)), pool = perm.slice(l);
+      const nP = pool.length, rem = K - l;
+      let eR = eIn(R), cross = 0, eP = 0;
+      for (const u of R) for (const w of ADJ[u]) if (!R.has(w)) cross++;
+      for (const u of pool) for (const w of ADJ[u]) if (!R.has(w)) eP++;
+      eP /= 2;
+      let m = eR;
+      if (rem > 0 && nP > 0) m += (rem / nP) * cross;
+      if (rem > 1 && nP > 1) m += (rem * (rem - 1)) / (nP * (nP - 1)) * eP;
+      out.push(m);
+    }
+    return out;
+  };
+  const inC = abs => abs.map(v => (v - abs[0]) / CVAL);
+  const fp = order(112358);
+  const focalAbs = doob(fp);
+
+  const sample = r => {                         // honest endpoint deviation |Z - E Z|/c
+    const a = [...Array(T).keys()];
+    for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    const S0 = new Set(a.slice(0, KV));
+    return Math.abs(eIn(S0) - focalAbs[0]) / CVAL;
+  };
+
+  const gauss = r => Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+  const bad = () => {                           // the excluded event, not a sampled run
+    const r = rng(31), out = [0], target = BANDC * 1.10;
+    for (let l = 1; l <= K; l++){
+      const d = target * (Math.pow(l / K, 1.4) - Math.pow((l - 1) / K, 1.4));
+      out.push(out[l-1] + d + gauss(r) * BANDC * 0.03);
+    }
+    return out;
+  };
+
+  // drawing sample of the link graph: 18% of its edges, for readability at t = 100
+  const LINK = EDGES.filter(() => rr() < 0.18);
+
+  // a handful of vertex-disjoint, well-spread pairs used to demonstrate triple -> link edge
+  const TRIP = [];
+  { const used = new Set();
+    for (let i = 0; i < 7; i++){
+      const a0 = Math.round(i * T / 7);
+      for (let d = 0; d < T && TRIP.length === i; d++){
+        const a = (a0 + d) % T;
+        if (used.has(a)) continue;
+        for (const b of ADJ[a]){
+          if (used.has(b)) continue;
+          const g0 = Math.abs(a - b), cyc = Math.min(g0, T - g0);
+          if (cyc < 16 || cyc > 40) continue;
+          used.add(a); used.add(b); TRIP.push([a, b]); break;
+        }
+      }
+    } }
+
+  // a small readable instance of H itself: v at the centre, 10 other vertices, 9 triples
+  const MINI = {
+    pos: [[0, 0.02]].concat(Array.from({ length: 10 }, (_, j) => {
+      const a = (j / 10) * Math.PI * 2 - Math.PI / 2;
+      return [Math.cos(a) * 0.60, Math.sin(a) * 0.50];
+    })),
+    tri: [[0,1,3],[0,4,6],[0,7,8],[0,9,2],[1,2,3],[4,5,6],[6,7,9],[2,8,10],[3,5,10]]
+  };
+
+  return {
+    id: 'lemma', K, tickEvery: 5, gates: [6, 15, 24], rate: 3.2,
+    yDefault: '50', yOptions: ['env','0.5','1','5','50'],
+    chapters: [
+      { tag: 'The hypergraph', layers: ['hyper'], y: '50', play: true, noplot: true,
+        title: '\\(H = (V, E),\\quad E \\subseteq \\binom{V}{3}\\)',
+        line: 'Every edge of \\(H\\) is a <b>triple</b> of vertices — that is what 3-uniform means. Lime triples are the ones through \\(v\\).',
+        annos: [
+          { link: true, world: [-1.08, -0.86, 0.20], tex: '|e| = 3\\ \\text{ for every } e \\in E(H)', color: '#999999', h: 0.145 }
+        ] },
+
+      { tag: 'The claim', layers: ['band'], y: '50', p: 0,
+        title: '\\(r\'_v = Z + F_v \\in [\\,C_1\\binom{t}{2}+1,\\ C_2\\binom{t}{2}-1\\,]\\)',
+        line: 'The corrected degree of every vertex has to stay between the two rails.',
+        annos: [
+          { span: [-BANDC, BANDC], x: 0.42, tex: 'r\'_v', color: '#83C167', h: 0.24 }
+        ] },
+
+      { tag: 'The link graph', layers: ['link','triples'], y: '50', play: true,
+        noplot: true,
+        line: 'Triples of \\(H\\) through \\(v\\) correspond one-to-one with edges of \\(\\tilde L_v\\). The ring is the window \\(U \\subseteq V(H)\\); only a \\(k_v\\)-subset \\(S_v \\subseteq U\\) ends up chosen.',
+        title: '\\(\\{v,u,w\\} \\in E(H) \\;\\longmapsto\\; uw \\in \\tilde L_v\\)',
+        annos: [
+          { link: true, world: [-1.08, -0.88, 0.20], tex: '\\tilde L_v = \\{\\, uw \\;:\\; \\{v,u,w\\} \\in E(H) \\,\\}', color: '#999999', h: 0.145 },
+          { link: true, world: [-1.08, -1.06, 0.20], tex: '\\deg_H(v) = |E(\\tilde L_v)|', color: '#777777', h: 0.135 },
+          { link: true, world: [-1.08, -1.26, 0.20], tex: 'S_v \\subseteq U\\ \\text{ chosen},\\ |S_v| = k_v', color: '#FFFF00', h: 0.135 },
+          { link: true, world: [-1.98, 0.90, 0.20], tex: 'U \\subseteq V(H):\\ \\text{the window}', color: '#777777', h: 0.13 }
+        ] },
+
+      { tag: 'The quantity', layers: ['link','reveal','band'], y: '50', play: true,
+        title: '\\(Z = e_{\\tilde L_v}(S_v)\\)',
+        line: 'One number, two readings: edges of \\(\\tilde L_v\\) inside \\(S_v\\), and triples of \\(H\\) at \\(v\\) with both partners chosen.',
+        annos: [
+          { link: true, world: [-1.08, 0.82, 0.20], tex: 'U,\\ |U| = t', color: '#999999', h: 0.15 },
+          { link: true, world: [-1.72, 0.34, 0.20], tex: 'S_v \\subset U,\\ |S_v| = k_v', color: '#FFFF00', h: 0.15 },
+          { link: true, world: [-1.66, -0.34, 0.20], tex: '\\tilde L_v', color: '#777777', h: 0.16 }
+        ] },
+
+      { tag: 'The process', layers: ['link','reveal','focal'], y: '0.5', play: true,
+        title: '\\(M_\\ell = \\mathbb{E}[Z \\mid x_1,\\dots,x_\\ell]\\)',
+        line: '\\(M_\\ell\\) is the expected degree of \\(v\\) given the vertices already revealed \u2014 the average of \\(Z\\) over all ways the remaining \\(k_v - \\ell\\) picks could land. Recall \\(r\'_v = Z + F_v\\), so \\(\\mathbb{E}[r\'_v \\mid x_1,\\dots,x_\\ell] = M_\\ell + \\mathbb{E}[F_v \\mid x_1,\\dots,x_\\ell]\\).',
+        annos: [
+          { x: 0.05, y: -0.22, tex: '\\mathbb{E}Z', color: '#999999', h: 0.17 },
+          { x: 0.52, y: 0.30, tex: 'M_\\ell', color: '#FFFF00', h: 0.19 },
+          { x: 1.07, y: 0.06, tex: 'Z', color: '#FFFF00', h: 0.19 }
+        ] },
+
+      { tag: 'The step size', layers: ['link','reveal','focal','ens','gates'], y: '1',
+        title: '\\(|M_\\ell - M_{\\ell-1}| \\le c = 2(k_v-1)\\)',
+        line: 'Swapping one chosen vertex moves Z by at most c.',
+        annos: [
+          { span: [-1, 1], x: 0.13, tex: 'c', color: '#FFFF00', h: 0.22 }
+        ] },
+
+      { tag: 'The bound', layers: ['link','reveal','focal','ens','env'], y: 'env',
+        title: '\\(\\Pr\\big(|M_{k_v} - \\mathbb{E}Z| \\ge \\lambda\\big) \\le 2e^{-\\theta^2/2}\\)',
+        line: 'Bounded steps confine the curve to a funnel that widens like √ℓ.',
+        annos: [
+          { x: 0.62, yEnv: 0.62, dy: 1.6, tex: '\\lambda = \\theta\\,c\\sqrt{k_v}', color: '#58C4DD', h: 0.19 },
+          { x: 0.62, yEnv: -0.62, dy: -1.6, tex: '-\\lambda', color: '#58C4DD', h: 0.19 }
+        ] },
+
+      { tag: 'The nesting', layers: ['link','reveal','focal','ens','env','band','fv'], y: '50',
+        title: '\\(\\lambda + F_v \\;<\\; \\tfrac{C_2-C_1}{2}\\binom{t}{2}\\)',
+        line: 'The funnel plus Fᵥ still fits inside the band.',
+        annos: [
+          { span: [-BANDC, BANDC], x: 0.30, tex: '\\tfrac{C_2-C_1}{2}\\binom{t}{2}', color: '#83C167', h: 0.2 },
+          { spanEnv: true, x: 0.62, tex: '\\lambda', color: '#58C4DD', h: 0.22 }
+        ] },
+
+      { tag: 'The exception', layers: ['link','reveal','focal','ens','env','band','fv','bad'], y: '50',
+        title: '\\(r\'_v \\notin [\\,C_1\\binom{t}{2}+1,\\ C_2\\binom{t}{2}-1\\,]\\)',
+        line: 'A bad vertex is one whose corrected degree escapes the band.',
+        annos: [
+          { spanEnv: true, x: 0.62, tex: '\\lambda', color: '#58C4DD', h: 0.22 }
+        ] },
+
+      { tag: 'Every vertex', layers: ['union'], y: '50', play: true, noplot: true,
+        title: '\\(\\Pr\\big[\\exists v \\text{ bad}\\big] \\le \\sum_{v} \\Pr[v \\text{ bad}] \\le n\\,\\varepsilon\\)',
+        line: 'Nothing above used anything special about \\(v\\), so the same bound \\(\\varepsilon = 2e^{-\\theta^2/2}\\) holds at every vertex. The union bound pays for all \\(n\\) of them at once, and since \\(\\varepsilon\\) is exponentially small, \\(n\\varepsilon\\) still fits inside the failure budget — so whp every vertex is good.',
+        annos: [
+          { link: true, world: [-1.10, 0.76, 0.20], tex: 'V(H):\\ n \\text{ vertices, each its own } \\tilde L_v', color: '#777777', h: 0.20 },
+          { link: true, world: [-1.62, -0.50, 0.20], tex: '\\textstyle\\sum_v \\Pr[v \\text{ bad}] = n\\varepsilon', color: '#FC6255', h: 0.20 },
+          { link: true, world: [-0.74, -0.78, 0.20], tex: '\\text{failure budget}', color: '#83C167', h: 0.20 }
+        ] }
+    ],
+    lamDefault: 3.0,
+    absVals: focalAbs, absCap: '\\(\\mathbb{E}[Z\\mid x_{\\le \\ell}]\\)',
+    focal: inC(focalAbs),
+    ensemble: [-0.40,-0.30,-0.20,-0.10,0.10,0.20,0.30,0.40]
+      .map((z, i) => ({ z, vals: inC(doob(order(9001 + i * 613))) })),
+    extreme: { z: -0.34, vals: bad() },
+    sample,
+    bands: [
+      { v:  BANDC, label: 'C_2\\binom{t}{2}-1' },
+      { v: -BANDC, label: 'C_1\\binom{t}{2}+1' }
+    ],
+    offsetBlock: { hi: FMAX, label: 'F_v \\le 2(k_v-2)' },
+    badLabel: '\\text{bad } v',
+    xTitle: '\\ell\\;\\text{(reveals of}\\ S_v\\text{)}',
+    yTitle: '(M_\\ell - \\mathbb{E}Z)/c',
+    stepCap: 'Reveal \\(\\ell\\)', devCap: '\\(|M_\\ell - \\mathbb{E}Z|/c\\)',
+    devFmt: v => Math.abs(v).toFixed(2),
+    keys: { focal: 'Doob path of \\(Z = e_{\\tilde L_v}(S_v)\\)',
+            extreme: 'Bad vertex · leaves the band',
+            gate: 'Swap gate \\(\\pm c = 2(k_v-1)\\)' },
+    hyper: { kind: 'link', SHOW: T, order: fp, LINK, TRIP, MINI, ROSTER: 60, T, KV, EZ },
+    panel: {
+      title: 'Link graph on the window',
+      defs: [
+        ['Window', '\\(U \\subseteq V(H)\\); \\(S_v\\) a uniform \\(k_v\\)-subset of \\(U\\)'],
+        ['Link graph', '\\(uw \\in \\tilde L_v \\iff \\{v,u,w\\} \\in E(H)\\), \\(H\\) 3-uniform'],
+        ['\\(Z\\)', '\\(e_{\\tilde L_v}(S_v)\\): induced edges of the link \\(\\tilde L_v\\) on \\(S_v\\)'],
+        ['Swap', 'one element of \\(S_v\\) moves \\(Z\\) by \\(\\le c = 2(k_v-1)\\)'],
+        ['Mean', '\\(\\mathbb{E}Z = \\tfrac12\\binom{k_v}{2}\\) at link density \\(\\tfrac12\\)']
+      ],
+      note: 'The ring is the window \\(U\\), the vertex set \\(v\\) draws its partners from; \\(v\\) sits above it. A drawn chord \\(uw\\) means \\(\\{v,u,w\\}\\) is a triple of the 3-uniform \\(H\\); a fraction of them are drawn so the picture stays readable. A chord lights lime once both endpoints are in \\(S_v\\) — those are the edges \\(Z\\) counts. The path is the exact Doob conditional expectation, so \\(\\mathbb{E}[Z\\mid x_{\\le\\ell}]\\) in the bar is a real number, not a sketch.'
+    },
+    panel2: {
+      title: 'The lemma · corrected degree stays in the band',
+      defs: [
+        ['Claim', '\\(r\'_v = Z + F_v \\in [C_1\\binom{t}{2}+1,\\ C_2\\binom{t}{2}-1]\\)'],
+        ['Band', '\\(\\pm\\tfrac{C_2-C_1}{2}\\binom{t}{2}\\), measured in units of \\(c\\)'],
+        ['Azuma', '\\(\\lambda = \\theta\\,c\\sqrt{k_v}\\), with \\(\\theta\\) the tail level you pick'],
+      ],
+      note: 'Amber rails: the band \\(r\'_v\\) must stay inside. The blue tube is the Azuma envelope \\(\\lambda = \\theta\\,c\\sqrt{k_v}\\); it sits well inside the rails, with the \\(F_v\\) offset (amber block, right) taking a sliver of the remaining room \u2014 that is the argument. Zoom the VALUE AXIS in to see the true motion: the deviation of \\(Z\\) is far smaller than the band, so the lemma holds with room to spare and Azuma is loose.'
+    }
+  };
+}
+
+/* ================= materials ======================================= */
+const mat = (name, color, extra = {}) => new THREE.MeshBasicMaterial({ name, color, ...extra });
+const tr = (name, color, opacity) => mat(name, color, { transparent:true, opacity, side:THREE.DoubleSide, depthWrite:false });
+const M = {
+  deck: mat('deck', 0x333333), axis: mat('axis', 0x888888), accent: mat('accent', 0xffff00),
+  ensemble: mat('ensemble', 0x777777), bound: mat('bound', 0x58c4dd), breach: mat('breach', 0xfc6255),
+  dim: mat('dim', 0x555555), faint: mat('faint', 0x2a2a2a),
+  triFaint: tr('triple_idle', 0x888888, 0.10), triPart: tr('triple_partial', 0x888888, 0.22),
+  triFull: tr('triple_inside', 0xffff00, 0.28), triGap: tr('nonedge_inside', 0xfc6255, 0.26),
+  missing: mat('nonedge', 0xfc6255), vnode: mat('vertex_v', 0xffffff), spoke: mat('triple_spoke', 0x888888),
+  band: mat('good_band_rail', 0x83c167), offset: tr('forced_pivot', 0x9a72ac, 0.5),
+  envelope: tr('envelope', 0x58c4dd, 0.14), inside: tr('inside_fill', 0x58c4dd, 0.12), tail: tr('tail_fill', 0xfc6255, 0.10),
+  gate: tr('gate', 0xffff00, 0.3), cursor: tr('cursor', 0xdddddd, 0.09)
+};
+
+/* ================= labels ========================================== */
+async function mathLabel(latex, { color = '#dddddd', h = 0.15, rot = 0 } = {}){
+  const svg = MathJax.tex2svg(latex, { display: false }).querySelector('svg');
+  svg.setAttribute('style', `color:${color}`);
+  const SC = 30;
+  const pw = Math.max(6, Math.round(parseFloat(svg.getAttribute('width')) * SC));
+  const ph = Math.max(6, Math.round(parseFloat(svg.getAttribute('height')) * SC));
+  svg.setAttribute('width', pw); svg.setAttribute('height', ph);
+  const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
+  const pad = Math.round(ph * 0.28);
+  const c = document.createElement('canvas');
+  c.width = pw + pad * 2; c.height = ph + pad * 2;
+  c.getContext('2d').drawImage(img, pad, pad, pw, ph);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, rotation: rot }));
+  s.scale.set(h * (c.width / c.height), h, 1);
+  s.name = 'label_' + latex.replace(/[^A-Za-z0-9]+/g, '_');
+  return s;
+}
+
+function textSprite(name, { color = '#dddddd', h = 0.15 } = {}){
+  const c = document.createElement('canvas'), px = 52;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
+  s.name = name;
+  const set = txt => {
+    const g0 = c.getContext('2d');
+    g0.font = `500 ${px}px "Computer Modern Serif", Georgia, serif`;
+    g0.letterSpacing = '0px';
+    const w = Math.ceil(g0.measureText(txt).width) + txt.length * 4 + 32;
+    c.width = w; c.height = Math.round(px * 1.6);
+    const g = c.getContext('2d');
+    g.font = `500 ${px}px "Computer Modern Serif", Georgia, serif`;
+    g.letterSpacing = '0px';
+    g.fillStyle = color; g.textBaseline = 'middle';
+    g.fillText(txt, 14, c.height / 2);
+    if (s.material.map) s.material.map.dispose();
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    s.material.map = tex; s.material.needsUpdate = true;
+    s.scale.set(h * (c.width / c.height), h, 1);
+  };
+  return { sprite: s, set };
+}
+
+/* ================= the model ======================================= */
+const model = new THREE.Group(); model.name = 'azuma_martingale';
+const wrap = new THREE.Group(); wrap.name = 'azuma_scene'; wrap.add(model);
+stage.setObject(wrap);
+
+let S = null;                 // active scene config
+let LAY = null;               // visible layers in chapter mode; null = show everything
+const on = n => !LAY || LAY.has(n);
+// zoomed graph-only steps show sprites at their authored size; the plot steps render the same
+// group about half as large on screen, so their labels need extra world height to stay legible
+const LS = () => { const ch = S && S.chapters && S.chapters[CH]; return (ch && ch.noplot) ? 1 : 2.2; };
+let DX = 0;                   // world units per step
+let frame = null, dyn = null;
+let capStay = null, capLeave = null, hyperLive = null, ringPos = null, linkPin = null, miniTri = null, roster = null;
+const LINK_RIGHT = -0.62;      // right edge for link-graph sprites: clear of the y-tick column
+const Y0 = -YSPAN - 0.1;
+
+const Z_HYPER = 0.20;
+const nodeGeo = new THREE.SphereGeometry(0.024, 14, 10);
+const vertGeo = new THREE.SphereGeometry(0.019, 12, 9);
+
+async function buildFrame(){
+  frame = new THREE.Group(); frame.name = 'axis_frame';
+  const chNow = S.chapters && S.chapters[CH];
+  const NOPLOT = !!(chNow && chNow.noplot);
+  if (NOPLOT){
+    capStay = textSprite('caption_inside', { color:'#58C4DD', h: 0.15 });
+    capLeave = textSprite('caption_tail', { color:'#FC6255', h: 0.15 });
+    capStay.sprite.visible = capLeave.sprite.visible = false;
+    hyperLive = null; ringPos = null; linkPin = null; miniTri = null; roster = null;
+    if (S.hyper && on('link')) await buildLink();
+    if (S.hyper && on('hyper')) await buildMini();
+    if (S.hyper && on('union')) await buildRoster();
+    if (chNow.annos) await buildAnnos(chNow.annos);
+    model.add(frame);
+    return;
+  }
+
+  const xrod = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, LEN + 0.16, 12), M.axis);
+  xrod.name = 'axis_x'; xrod.rotation.z = Math.PI / 2; xrod.position.set(LEN / 2, Y0, ZH + 0.06);
+  frame.add(xrod);
+  for (let k = 0; k <= S.K; k += S.tickEvery){
+    const t = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.05, 0.01), M.axis);
+    t.name = `tick_x_${k}`; t.position.set(k * DX, Y0 - 0.025, ZH + 0.06);
+    frame.add(t);
+    const lb = await mathLabel(String(k), { color:'#dddddd', h: 0.15 });
+    lb.position.set(k * DX, Y0 - 0.16, ZH + 0.06); frame.add(lb);
+  }
+  const xt = await mathLabel(S.xTitle, { color:'#999999', h: 0.19 });
+  xt.position.set(LEN + 0.14 + xt.scale.x / 2, Y0, ZH + 0.06); frame.add(xt);
+
+  const yrod = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 2 * YSPAN + 0.12, 12), M.axis);
+  yrod.name = 'axis_y'; yrod.position.set(-0.02, 0, ZH + 0.06);
+  frame.add(yrod);
+  const dec = YSTEP < 1 ? (YSTEP < 0.5 ? 2 : 1) : 0;
+  for (let m = -VIS; m <= VIS + 1e-9; m += YSTEP){
+    const v = Math.abs(m) < 1e-9 ? 0 : m;
+    const yv = v * S.yu;
+    const t = new THREE.Mesh(new THREE.BoxGeometry(v ? 0.05 : 0.085, 0.008, 0.01), M.axis);
+    t.name = `tick_y_${v}`; t.position.set(-0.02 - (v ? 0.032 : 0.05), yv, ZH + 0.06);
+    frame.add(t);
+    const txt = v === 0 ? '0' : (v > 0 ? '+' : '-') + Math.abs(v).toFixed(dec);
+    const lb = await mathLabel(txt, { color: v ? '#999999' : '#dddddd', h: 0.15 });
+    lb.name = 'ytick_label_' + v;
+    lb.position.set(-0.40, yv, ZH + 0.06); frame.add(lb);
+  }
+  const yt = await mathLabel(S.yTitle, { color:'#999999', h: 0.20 });
+  yt.name = 'yaxis_title';
+  yt.position.set(-0.02, YSPAN + 0.24, ZH + 0.06); frame.add(yt);
+
+  const mean = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, LEN + 0.1, 10), M.axis);
+  mean.name = 'mean_axis'; mean.rotation.z = Math.PI / 2; mean.position.set(LEN / 2, 0, 0);
+  frame.add(mean);
+
+  capStay = textSprite('caption_inside', { color:'#58C4DD', h: 0.15 });
+  frame.add(capStay.sprite);
+  capLeave = textSprite('caption_tail', { color:'#FC6255', h: 0.15 });
+  frame.add(capLeave.sprite);
+
+  hyperLive = null; ringPos = null; linkPin = null; miniTri = null; roster = null;
+  if (S.hyper && on('link')) await buildLink();
+  if (S.bands && on('band')) await buildBands();
+  if (S.chapters && S.chapters[CH] && S.chapters[CH].annos) await buildAnnos(S.chapters[CH].annos);
+
+  model.add(frame);
+}
+
+// the good band: two rails the corrected degree must stay between
+async function buildBands(){
+  const g = new THREE.Group(); g.name = 'good_band';
+  for (const b of S.bands){
+    const y = CL(b.v * S.yu);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(LEN + 0.08, 0.007, 2 * ZH + 0.04), M.band);
+    rail.name = 'band_rail_' + (b.v > 0 ? 'upper' : 'lower');
+    rail.position.set(LEN / 2, y, 0); g.add(rail);
+    const lb = await mathLabel(b.label, { color:'#83C167', h: 0.17 });
+    lb.position.set(LEN * 0.84, y + (b.v > 0 ? -0.16 : 0.16), ZH + 0.12);
+    g.add(lb);
+  }
+  if (S.offsetBlock && on('fv')){
+    const hi = Math.max(0.014, CL(S.offsetBlock.hi * S.yu));
+    const blk = new THREE.Mesh(new THREE.BoxGeometry(0.055, hi, 0.16), M.offset);
+    blk.name = 'forced_pivot_block'; blk.position.set(LEN + 0.07, hi / 2, 0); g.add(blk);
+    const lb = await mathLabel(S.offsetBlock.label, { color:'#9A72AC', h: 0.15 });
+    lb.position.set(LEN + 0.14 + lb.scale.x / 2, hi + 0.14, 0); g.add(lb);
+  }
+  if (S.badLabel && on('bad')){
+    const lb = await mathLabel(S.badLabel, { color:'#FC6255', h: 0.17 });
+    lb.position.set(LEN * 0.08, CL(S.bands[0].v * S.yu) * 0.50, S.extreme.z);
+    g.add(lb);
+  }
+  frame.add(g);
+}
+
+/* symbols pinned to the objects they name: labels, measure spans, leader lines */
+async function buildAnnos(list){
+  const g = new THREE.Group(); g.name = 'annotations';
+  const linkG = frame.getObjectByName('link_graph');
+  for (const a of list){
+    const col = a.color || '#dddddd';
+    const lb = await mathLabel(a.tex, { color: col, h: a.h || 0.17 });
+    const host = (a.link && linkG) ? linkG : g;
+    if (a.world){
+      lb.position.set(a.world[0], a.world[1], a.world[2]);
+      host.add(lb);
+      continue;
+    }
+    const x = (a.x !== undefined ? a.x : 0.5) * LEN;
+    const mat = new THREE.MeshBasicMaterial({ name: 'anno_rule', color: new THREE.Color(col), transparent: true, opacity: 0.75 });
+    if (a.span || a.spanEnv){
+      const lo = a.spanEnv ? -envC(S.K) : a.span[0];
+      const hi = a.spanEnv ?  envC(S.K) : a.span[1];
+      const y0 = CL(lo * S.yu), y1 = CL(hi * S.yu), z = ZH + 0.07;
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, Math.abs(y1 - y0), 8), mat);
+      rod.name = 'anno_span'; rod.position.set(x, (y0 + y1) / 2, z); g.add(rod);
+      for (const yy of [y0, y1]){
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.007, 0.01), mat);
+        cap.name = 'anno_span_cap'; cap.position.set(x, yy, z); g.add(cap);
+      }
+      lb.position.set(x - lb.scale.x / 2 - 0.05, (y0 + y1) / 2, z);
+      g.add(lb);
+      continue;
+    }
+    const yv = a.yEnv !== undefined ? CL(envC(Math.abs(a.yEnv) * S.K) * S.yu * Math.sign(a.yEnv)) : CL((a.y || 0) * S.yu);
+    lb.position.set(x, yv + (a.dy ? a.dy * 0.09 : 0.12), ZH + 0.07);
+    g.add(lb);
+    if (a.dy){
+      const p0 = lb.position.y - Math.sign(a.dy) * 0.09;
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, Math.abs(p0 - yv), 6), mat);
+      rod.name = 'anno_leader'; rod.position.set(x, (p0 + yv) / 2, ZH + 0.07); g.add(rod);
+    }
+  }
+  frame.add(g);
+}
+
+/* the link graph: sampled ring of V, window vertices larger, link edges as chords */
+async function buildLink(){
+  const { SHOW, LINK } = S.hyper;
+  const g = new THREE.Group(); g.name = 'link_graph';
+  const R = 0.62, X = -1.08, Z = Z_HYPER;
+  ringPos = [];
+  for (let i = 0; i < SHOW; i++){
+    const a = (i / SHOW) * Math.PI * 2 - Math.PI / 2;
+    ringPos.push(new THREE.Vector3(X + R * Math.cos(a), R * Math.sin(a), Z));
+  }
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(R, 0.003, 8, 128), M.deck);
+  ring.name = 'ambient_ring'; ring.position.set(X, 0, Z); g.add(ring);
+
+  const hub = new THREE.Vector3(X, 0, Z);
+  LINK.forEach(([a, b], j) => {
+    const mid = ringPos[a].clone().add(ringPos[b]).multiplyScalar(0.5).lerp(hub, 0.45);
+    const t = new THREE.Mesh(new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3([ringPos[a], mid, ringPos[b]], false, 'catmullrom', 0.4),
+      14, 0.0016, 5, false), M.faint);
+    t.name = 'link_edge_' + j; g.add(t);
+  });
+  for (let i = 0; i < SHOW; i++){
+    const s = new THREE.Mesh(new THREE.SphereGeometry(0.0125, 10, 8), M.dim);
+    s.name = 'amb_vertex_' + i; s.position.copy(ringPos[i]); g.add(s);
+  }
+  // v itself: the vertex whose link graph this is. Sits above the ring of its candidate partners.
+  const apex = new THREE.Vector3(X, R + 0.42, Z);
+  S.hyper.geom = { X, R, Z, apex };
+  const vn = new THREE.Mesh(new THREE.SphereGeometry(0.026, 14, 10), M.vnode);
+  vn.name = 'vertex_v'; vn.position.copy(apex); g.add(vn);
+  const vl = await mathLabel('v', { color:'#ffffff', h: 0.075 * LS() });
+  vl.name = 'label_vertex_v'; vl.position.set(apex.x + 0.062 * LS(), apex.y + 0.028 * LS(), Z); g.add(vl);
+
+  hyperLive = textSprite('link_state', { color:'#FFFF00', h: 0.075 * LS() });
+  linkPin = sp => sp.position.set(LINK_RIGHT - sp.scale.x / 2, -R - 0.46, Z);
+  linkPin(hyperLive.sprite);
+  if (!on('triples')) g.add(hyperLive.sprite);   // an unsized sprite in the group poisons the fit
+  frame.add(g);
+}
+
+function paintLink(l){
+  const g = frame.getObjectByName('link_graph');
+  if (!g || !ringPos) return;
+  const { order, LINK, KV } = S.hyper;
+  const shown = Math.max(0, Math.min(KV, l));
+  const seen = new Set(order.slice(0, shown));
+  for (let i = 0; i < ringPos.length; i++){
+    const v = g.getObjectByName('amb_vertex_' + i);
+    if (v) v.material = seen.has(i) ? M.accent : M.dim;
+  }
+  let z = 0;
+  LINK.forEach(([a, b], j) => {
+    const both = seen.has(a) && seen.has(b);
+    if (both) z++;
+    const e = g.getObjectByName('link_edge_' + j);
+    if (e) e.material = both ? M.accent : (seen.has(a) || seen.has(b) ? M.dim : M.faint);
+  });
+  if (hyperLive && !on('triples')){
+    hyperLive.set('lit edges = Z');
+    if (linkPin) linkPin(hyperLive.sprite);          // re-anchor: the string's width changes
+  }
+}
+
+/* H itself: a small 3-uniform hypergraph, its edges drawn as filled triangles */
+async function buildMini(){
+  const { MINI } = S.hyper;
+  if (!MINI) return;
+  const g = new THREE.Group(); g.name = 'hypergraph_mini';
+  const X = -1.08, Z = Z_HYPER;
+  const P = MINI.pos.map(([a, b]) => new THREE.Vector3(X + a, b, Z));
+  miniTri = [];
+  MINI.tri.forEach((t, i) => {
+    const hasV = t.includes(0);
+    const face = new THREE.BufferGeometry();
+    const pts = t.map(j => P[j]);
+    face.setAttribute('position', new THREE.Float32BufferAttribute(
+      pts.flatMap(q => [q.x, q.y, q.z]), 3));
+    face.computeVertexNormals();
+    const fm = new THREE.Mesh(face, hasV ? M.triFull : M.triPart);
+    fm.name = 'hyperedge_' + i + (hasV ? '_at_v' : ''); g.add(fm);
+    const rims = [];
+    for (let e = 0; e < 3; e++){
+      const rm = new THREE.Mesh(new THREE.TubeGeometry(
+        new THREE.LineCurve3(pts[e], pts[(e + 1) % 3]), 1, 0.0026, 6, false),
+        hasV ? M.accent : M.spoke);
+      rm.name = 'hyperedge_rim_' + i + '_' + e; g.add(rm); rims.push(rm);
+    }
+    miniTri.push({ fm, rims });
+  });
+  P.forEach((q, j) => {
+    const s = new THREE.Mesh(new THREE.SphereGeometry(j === 0 ? 0.026 : 0.019, 14, 10),
+      j === 0 ? M.vnode : M.dim);
+    s.name = j === 0 ? 'vertex_v' : 'vertex_' + j; s.position.copy(q); g.add(s);
+  });
+  const vl = await mathLabel('v', { color:'#ffffff', h: 0.075 });
+  vl.name = 'label_vertex_v'; vl.position.set(P[0].x + 0.062, P[0].y + 0.028, Z); g.add(vl);
+  frame.add(g);
+}
+
+/* the union bound: every vertex of H gets the same argument, and the failures add up */
+async function buildRoster(){
+  const n = (S.hyper && S.hyper.ROSTER) || 60;
+  const COLS = 12, PITCH = 0.12, SIDE = 0.085, X0 = -1.76, Y0R = 0.40, Z = Z_HYPER;
+  const g = new THREE.Group(); g.name = 'vertex_roster';
+  const tile = new THREE.BoxGeometry(SIDE, SIDE, 0.010);
+  const tiles = [];
+  for (let i = 0; i < n; i++){
+    const x = X0 + (i % COLS) * PITCH, y = Y0R - Math.floor(i / COLS) * PITCH;
+    const base = new THREE.Mesh(tile, M.faint);
+    base.name = 'roster_vertex_' + i; base.position.set(x, y, Z); g.add(base);
+    const good = new THREE.Mesh(tile, M.accent);
+    good.name = 'roster_good_' + i; good.position.set(x, y, Z + 0.006);
+    good.scale.setScalar(0.62); good.visible = false; g.add(good);
+    tiles.push({ base, good });
+  }
+  const W = (COLS - 1) * PITCH + SIDE;
+  const track = new THREE.Mesh(new THREE.BoxGeometry(W, 0.045, 0.008), M.faint);
+  track.name = 'failure_budget_track'; track.position.set(X0 - SIDE / 2 + W / 2, -0.24, Z); g.add(track);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.075, 0.010), M.band);
+  cap.name = 'failure_budget_cap'; cap.position.set(X0 - SIDE / 2 + W, -0.24, Z + 0.006); g.add(cap);
+  const fill = new THREE.Mesh(new THREE.BoxGeometry(1, 0.045, 0.010), M.breach);
+  fill.name = 'accumulated_failure'; fill.position.set(X0 - SIDE / 2, -0.24, Z + 0.004);
+  fill.geometry.translate(0.5, 0, 0);            // grow rightwards from the left edge
+  fill.scale.x = 0.0001; g.add(fill);
+  frame.add(g);
+  roster = { tiles, fill, n, W };
+}
+
+function paintRoster(p){
+  if (!roster) return;
+  const { tiles, fill, n, W } = roster;
+  const t = Math.min(1, Math.max(0, p / S.K)) * (n + 2);
+  tiles.forEach((o, i) => {
+    const done = i < t;
+    o.good.visible = done;
+    o.good.scale.setScalar(i === Math.floor(t) ? 0.95 : 0.62);
+  });
+  // each resolved vertex adds its own epsilon; the whole roster still spends a sliver of the budget
+  const frac = Math.min(1, t / n) * 0.085;
+  fill.scale.x = Math.max(0.0001, frac * W);
+}
+
+function paintMini(p){
+  if (!miniTri) return;
+  const t = Math.min(1, Math.max(0, p / S.K)) * (miniTri.length + 0.4);
+  miniTri.forEach((o, i) => {
+    const shown = i < t;
+    o.fm.visible = shown;
+    for (const r of o.rims) r.visible = shown;
+  });
+}
+
+/* triple -> link edge: v drops out of each triple {v,u,w}, leaving the pair uw */
+function paintTriples(p){
+  const lg = frame && frame.getObjectByName('link_graph');
+  if (!lg || !S.hyper || !S.hyper.geom || !ringPos) return;
+  let g = lg.getObjectByName('triple_fan');
+  if (!g){ g = new THREE.Group(); g.name = 'triple_fan'; lg.add(g); }
+  for (const ch of g.children.slice()){
+    g.remove(ch);
+    ch.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  }
+  const { X, R, Z, apex } = S.hyper.geom, TRIP = S.hyper.TRIP;
+  const hub = new THREE.Vector3(X, 0, Z);
+  const n = TRIP.length;
+  const t = Math.min(1, Math.max(0, p / S.K)) * n;
+  TRIP.forEach(([a, b], i) => {
+    const pa = ringPos[a], pb = ringPos[b];
+    const mid = pa.clone().add(pb).multiplyScalar(0.5).lerp(hub, 0.45);
+    const sub = Math.max(0, Math.min(1, t - i));
+    const base = new THREE.Mesh(new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3([pa, mid, pb], false, 'catmullrom', 0.4), 16,
+      sub >= 1 ? 0.0042 : 0.0022, 6, false), sub > 0.55 ? M.accent : M.dim);
+    base.name = 'link_pair_' + i; g.add(base);
+    if (sub > 0) for (const q of [pa, pb]){
+      const nd = new THREE.Mesh(nodeGeo, M.accent);
+      nd.name = 'pair_end_' + i; nd.position.copy(q); nd.scale.setScalar(0.62); g.add(nd);
+    }
+    if (sub >= 1) return;                             // v is gone: only the pair remains
+    const ap = apex.clone().lerp(mid, sub);
+    const face = new THREE.BufferGeometry();
+    face.setAttribute('position', new THREE.Float32BufferAttribute(
+      [ap.x, ap.y, ap.z, pa.x, pa.y, pa.z, pb.x, pb.y, pb.z], 3));
+    face.computeVertexNormals();
+    const fm = new THREE.Mesh(face, sub > 0 ? M.triFull : M.triFaint);
+    fm.name = 'triple_face_' + i; g.add(fm);
+    for (const q of [pa, pb]){
+      const sp = new THREE.Mesh(new THREE.TubeGeometry(
+        new THREE.LineCurve3(ap, q), 1, 0.0022, 5, false), sub > 0 ? M.spoke : M.faint);
+      sp.name = 'triple_spoke_' + i; g.add(sp);
+    }
+    if (sub > 0){
+      const nd = new THREE.Mesh(vertGeo, M.vnode);
+      nd.name = 'triple_apex_' + i; nd.position.copy(ap); g.add(nd);
+    }
+  });
+  if (hyperLive) hyperLive.sprite.visible = false;
+}
+
+/* ---- dynamic geometry: paths, envelope, regions, gates ------------ */
+const CL = y => Math.max(-YSPAN, Math.min(YSPAN, y));   // never draw outside the value axis
+// true when a good-band rail is pressed against the top of the axis: that strip is taken
+const railClamped = () => !!(S && S.bands && S.bands.some(b => Math.abs(b.v * S.yu) > YSPAN - 0.02));
+
+function tubeFor(vals, p, z, radius, mat, name, seg){
+  const kk = Math.floor(p), pts = [];
+  for (let k = 0; k <= Math.min(kk, S.K); k++) pts.push(new THREE.Vector3(k * DX, CL(vals[k] * S.yu), z));
+  if (p > kk && kk < S.K){
+    const f = p - kk;
+    pts.push(new THREE.Vector3((kk + f) * DX, CL((vals[kk] + f * (vals[kk+1] - vals[kk])) * S.yu), z));
+  }
+  if (pts.length < 2) return null;
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0);
+  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(2, Math.ceil(p) * 3), radius, seg, false), mat);
+  m.name = name; return m;
+}
+
+function sheet(sign, p, name){
+  const pos = [], idx = [], steps = 48;
+  for (let i = 0; i <= steps; i++){
+    const lf = p * i / steps, x = lf * DX, yv = CL(sign * envC(lf) * S.yu);
+    pos.push(x, yv, -ZH, x, yv, ZH);
+    if (i < steps){ const a = i * 2; idx.push(a, a+1, a+2, a+1, a+3, a+2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, M.envelope); m.name = name; return m;
+}
+function region(p, lo, hi, mat, name){
+  const pos = [], idx = [], steps = 48, z = ZH + 0.02;
+  for (let i = 0; i <= steps; i++){
+    const lf = p * i / steps, x = lf * DX;
+    pos.push(x, CL(lo(lf)), z, x, CL(hi(lf)), z);
+    if (i < steps){ const a = i * 2; idx.push(a, a+1, a+2, a+1, a+3, a+2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.name = name; return m;
+}
+function edge(sign, z, p, name){
+  const pts = [], steps = 48;
+  for (let i = 0; i <= steps; i++){ const lf = p * i / steps; pts.push(new THREE.Vector3(lf * DX, CL(sign * envC(lf) * S.yu), z)); }
+  const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5),
+    steps, 0.007, 8, false), M.bound);
+  m.name = name; return m;
+}
+
+function build(p){
+  for (const ch of dyn.children.slice()){
+    dyn.remove(ch);
+    ch.traverse(o => { if (o.geometry && o.geometry !== nodeGeo && o.geometry !== vertGeo) o.geometry.dispose(); });
+  }
+  if (S.hyper && on('link') && on('triples')) paintTriples(p);
+  if (S.hyper && on('hyper')) paintMini(p);
+  if (S.hyper && on('union')) paintRoster(p);
+  if (p <= 0.02) { if (S.hyper && on('link')) paintLink(on('reveal') ? 0 : 0); return; }
+
+  if (on('env')){
+  const envg = new THREE.Group(); envg.name = 'azuma_envelope';
+  envg.add(region(p, l => -envC(l) * S.yu, l => envC(l) * S.yu, M.inside, 'inside_region'));
+  envg.add(region(p, l => envC(l) * S.yu, () => YSPAN, M.tail, 'tail_region_upper'));
+  envg.add(region(p, () => -YSPAN, l => -envC(l) * S.yu, M.tail, 'tail_region_lower'));
+  for (const s of [1, -1]) for (const z of [ZH + 0.03])
+    envg.add(edge(s, z, p, `envelope_edge_${s > 0 ? 'upper' : 'lower'}_${z > 0 ? 'front' : 'back'}`));
+  dyn.add(envg);
+  }
+
+  if (on('ens')){
+  const ens = new THREE.Group(); ens.name = 'ensemble_paths';
+  S.ensemble.forEach((e, i) => { const t = tubeFor(e.vals, p, e.z, 0.0075, M.ensemble, `sample_path_${i+1}`, 7); if (t) ens.add(t); });
+  dyn.add(ens);
+  }
+
+  if (on('focal')){
+  const foc = new THREE.Group(); foc.name = 'focal_martingale';
+  const ft = tubeFor(S.focal, p, 0, 0.016, M.accent, 'martingale_path', 14); if (ft) foc.add(ft);
+  const every = S.K > 30 ? 2 : 1;
+  for (let k = 0; k <= Math.min(Math.floor(p), S.K); k += every){
+    const s = new THREE.Mesh(nodeGeo, M.accent);
+    s.name = `path_node_${k}`; s.position.set(k * DX, CL(S.focal[k] * S.yu), 0); foc.add(s);
+  }
+  dyn.add(foc);
+  }
+
+  if (on('gates')){
+  const gates = new THREE.Group(); gates.name = 'bounded_difference_gates';
+  S.gates.filter(k => p >= k - 1).forEach(k => {
+    const y0 = S.focal[k-1] * S.yu;
+    const hi = CL(y0 + S.yu), lo = CL(y0 - S.yu);
+    if (hi - lo > 0.004){
+      const win = new THREE.Mesh(new THREE.BoxGeometry(0.03, hi - lo, 0.02), M.gate);
+      win.name = `difference_window_${k}`; win.position.set(k * DX, (hi + lo) / 2, 0); gates.add(win);
+    }
+    [[hi, 'upper', y0 + S.yu], [lo, 'lower', y0 - S.yu]].forEach(([y, tag, raw]) => {
+      if (Math.abs(raw) > YSPAN - 0.002) return;               // gate edge is off the axis: don't draw it
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.008, 0.02), M.accent);
+      cap.name = `difference_cap_${k}_${tag}`;
+      cap.position.set(k * DX, y, 0); gates.add(cap);
+    });
+  });
+  dyn.add(gates);
+  }
+
+  if (on('bad')){
+  const tail = new THREE.Group(); tail.name = 'extreme_run';
+  const et = tubeFor(S.extreme.vals, p, S.extreme.z, 0.013, M.breach, 'extreme_path', 12); if (et) tail.add(et);
+  let kb = -1;
+  for (let k = 1; k <= Math.min(Math.floor(p), S.K); k++) if (Math.abs(S.extreme.vals[k]) > envC(k)) { kb = k; break; }
+  if (kb > 0){
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.009, 12, 28), M.breach);
+    ring.name = 'breach_marker'; ring.rotation.y = Math.PI / 2;
+    ring.position.set(kb * DX, CL(S.extreme.vals[kb] * S.yu), S.extreme.z); tail.add(ring);
+  }
+  dyn.add(tail);
+  }
+
+  if (p < S.K - 0.01 && on('focal') && on('env')){
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 2 * CL(envC(p) * S.yu) + 0.02, 8), M.axis);
+    bar.name = 'time_cursor_rod'; bar.position.set(p * DX, 0, ZH + 0.02); dyn.add(bar);
+  }
+
+  if (S.hyper && on('link')) paintLink(on('reveal') ? Math.floor(p) : 0);
+}
+
+/* ================= camera framing =================================== */
+let userMoved = false;
+stage._controls.addEventListener('start', () => { userMoved = true; });
+
+const finite3 = v => Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+
+function fitView(){
+  const cam = stage._camera, ctl = stage._controls;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  if (!Number.isFinite(W) || !Number.isFinite(H) || W < 50 || H < 50) return false;
+  const box = new THREE.Box3().setFromObject(wrap);
+  if (box.isEmpty() || !finite3(box.min) || !finite3(box.max)) return false;
+  const left = Math.min(W * 0.45, document.getElementById('title').getBoundingClientRect().right + 32);
+  const top = 24, bot = Math.min(H * 0.35, document.getElementById('bar').getBoundingClientRect().height + 12);
+  const areaW = Math.max(200, W - left - 40), areaH = Math.max(160, H - bot - top);
+  const wantCx = left + areaW / 2, wantCy = top + areaH / 2;
+  // straight-on camera: the scene is planar, so the fit is a closed form
+  const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  const tanH = Math.tan(cam.fov * Math.PI / 360);
+  const dist = Math.max(size.y / (0.88 * areaH), size.x / (0.92 * areaW)) * H / (2 * tanH) + size.z;
+  if (!Number.isFinite(dist) || dist <= 0) return false;
+  const wpp = 2 * dist * tanH / H;                       // world units per pixel at the scene plane
+  const cx = c.x - (wantCx - W / 2) * wpp, cy = c.y + (wantCy - H / 2) * wpp;
+  ctl.target.set(cx, cy, c.z);
+  cam.position.set(cx, cy, c.z + dist);
+  cam.near = Math.max(dist / 100, 0.01); cam.far = dist * 100;
+  cam.updateProjectionMatrix(); cam.updateMatrixWorld(); ctl.update();
+  return true;
+}
+
+/* the graph illustration is left of the value axis; after the camera is fitted, measure the
+   real screen boxes and slide the whole graph group left until it clears the y-tick column */
+function clearGraphColumn(){
+  const g = frame && (frame.getObjectByName('link_graph'));
+  if (!g) return false;
+  const cam = stage._camera, W = stage.clientWidth, H = stage.clientHeight;
+  const sx = o => {
+    const w = o.scale.x / 2, h = o.scale.y / 2;
+    let lo = 1e9, hi = -1e9;
+    for (const dx of [-w, w]) for (const dy of [-h, h]){
+      const v = o.position.clone().add(new THREE.Vector3(dx, dy, 0));
+      o.parent.localToWorld(v); v.project(cam);
+      const px = (v.x + 1) / 2 * W;
+      lo = Math.min(lo, px); hi = Math.max(hi, px);
+    }
+    return { lo, hi };
+  };
+  let tickLo = 1e9;
+  frame.traverse(o => { if (o.isSprite && (o.name.startsWith('ytick_label_') || o.name === 'yaxis_title')) tickLo = Math.min(tickLo, sx(o).lo); });
+  if (!isFinite(tickLo)) return false;
+  let right = -1e9;
+  g.traverse(o => { if (o.isSprite) right = Math.max(right, sx(o).hi); });
+  const over = right - (tickLo - 10);
+  if (over <= 0) return false;
+  const dist = cam.position.distanceTo(stage._controls.target);
+  const wpp = (2 * dist * Math.tan(cam.fov * Math.PI / 360)) / H;
+  const rx = Math.abs(new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0).x) || 1;
+  g.position.x -= (over * wpp) / rx;
+  return true;
+}
+
+const sr = stage.shadowRoot;
+// the stage's 200x200 shadow-catcher sits at y = 0 and writes depth; at this near-grazing
+// camera it swallows everything below the mean line (negative y ticks, lower rail, lower funnel)
+if (stage._ground) stage._ground.material.depthWrite = false;
+const exportBar = sr ? sr.querySelector('.toolbar') : null;
+if (exportBar) exportBar.style.display = 'none';
+if (stage._ground) stage._ground.visible = false;
+if (stage._renderer) stage._renderer.toneMapping = THREE.NoToneMapping;
+if (sr){
+  const nt = sr.querySelector('.note'); if (nt) nt.style.display = 'none';
+}
+
+/* ================= clock, readouts, controls ======================== */
+const el = id => document.getElementById(id);
+let p = 0, playing = true, last = performance.now(), acc = 0;
+
+function readout(){
+  const k = Math.min(S.K, Math.floor(p));
+  el('rk').textContent = String(k).padStart(2, '0') + ' / ' + S.K;
+  el('rd').textContent = S.devFmt(S.focal[k]);
+  if (S.absVals) el('ra').textContent = S.absVals[k].toFixed(2);
+  el('scrub').value = p;
+}
+function setP(v){ p = Math.max(0, Math.min(S.K, v)); build(p); readout(); }
+
+let SAMPLES = [];                  // sorted endpoint deviations, in units of c
+function drawSamples(){
+  if (!S.sample){ SAMPLES = []; return; }
+  const rr = rng(20260829);
+  SAMPLES = Array.from({ length: 4000 }, () => S.sample(rr)).sort((a, b) => a - b);
+}
+function observedEscape(t){
+  const thr = t * Math.sqrt(S.K);
+  let lo = 0, hi = SAMPLES.length;
+  while (lo < hi){ const mid = (lo + hi) >> 1; if (SAMPLES[mid] < thr) lo = mid + 1; else hi = mid; }
+  return (SAMPLES.length - lo) / SAMPLES.length;
+}
+
+function setLam(t){
+  LAM = t;
+  const raw = pBound(t), pb = Math.min(1, raw) * 100;
+  el('rl').textContent = t.toFixed(2);
+  el('rp').textContent = '≤ ' + (pb >= 10 ? pb.toFixed(0) : pb.toFixed(1)) + '%';
+  el('ro').parentElement.style.display = SAMPLES.length ? '' : 'none';
+  const obs = SAMPLES.length ? observedEscape(t) * 100 : 0;
+  el('ro').textContent = obs === 0 ? '0%' : (obs < 0.1 ? '<0.1%' : obs.toFixed(1) + '%');
+  if (SAMPLES.length) el('omax').textContent = 'max ' + SAMPLES[SAMPLES.length - 1].toFixed(2) + 'c · need ' + (t * Math.sqrt(S.K)).toFixed(2) + 'c';
+  el('rp').style.color = raw >= 1 ? '#999999' : '#fff';
+  el('flag').textContent = raw >= 1 ? 'vacuous' : '';
+  if (el('lamTex')) el('lamTex').textContent = t.toFixed(2);
+  if (capStay){
+    capStay.sprite.visible = SAMPLES.length > 0 && on('env') && !(S.bands && on('band'));
+    capStay.set('observed escape  ' + (obs === 0 ? '0%' : (obs < 0.1 ? '<0.1%' : obs.toFixed(1) + '%')) + '  of 4000 samples');
+    capStay.sprite.position.set(LEN * 0.58, -CL(envC(S.K) * S.yu) * 0.55, ZH + 0.05);
+    capLeave.set('Azuma bound only:  P(leave) ≤ ' + pb.toFixed(1) + '%');
+    const eTop = CL(envC(S.K) * S.yu);
+    capLeave.sprite.position.set(LEN * 0.62, (eTop + YSPAN) / 2, ZH + 0.05);
+    // with the good band on screen the top strip belongs to the rails, not to this caption
+    capLeave.sprite.visible = eTop < YSPAN - 0.06 && !(S.bands && on('band')) && on('env') && !S.chapters;
+  }
+  let kb = 0;
+  for (let k = 1; k <= S.K; k++) if (Math.abs(S.extreme.vals[k]) > envC(k)) { kb = k; break; }
+  if (el('kb')) el('kb').textContent = kb ? 'it first leaves the funnel at k = ' + kb : 'it never leaves the funnel at this θ';
+  build(p); readout();
+}
+
+async function loadScene(cfg){
+  S = cfg; DX = LEN / S.K;
+  yMode = S.yDefault || 'env'; el('yr').value = yMode;
+  setScale();
+  model.clear();
+  dyn = new THREE.Group(); dyn.name = 'process';
+  await buildFrame();
+  model.add(dyn);
+
+  // panel text
+  el('sceneTitle').textContent = S.panel.title;
+  el('sceneDefs').innerHTML = S.panel.defs
+    .map(([k, v]) => `<div class="def"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  el('sceneNote').innerHTML = S.panel.note;
+  el('scene2').style.display = S.panel2 ? '' : 'none';
+  if (S.panel2){
+    el('scene2Title').textContent = S.panel2.title;
+    el('scene2Defs').innerHTML = S.panel2.defs
+      .map(([k, v]) => '<div class="def"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>').join('');
+    el('scene2Note').innerHTML = S.panel2.note;
+  }
+  el('capStep').innerHTML = S.stepCap;
+  el('capDev').innerHTML = S.devCap;
+  el('cellAbs').style.display = S.absVals ? '' : 'none';
+  if (S.absVals) el('capAbs').innerHTML = S.absCap;
+  el('keyFocal').innerHTML = S.keys.focal;
+  el('keyExtreme').innerHTML = S.keys.extreme;
+  el('keyGate').innerHTML = S.keys.gate;
+  el('scrub').max = S.K;
+  el('yr').innerHTML = (S.yOptions || ['env']).map(v =>
+    '<option value="' + v + '">' + (v === 'env' ? 'Fit envelope' : '± ' + v + 'c') + '</option>').join('');
+  el('yr').value = yMode;
+  if (S.lamDefault) el('lam').value = S.lamDefault;
+  await MathJax.typesetPromise([el('title'), el('bar')]);
+
+  drawSamples();
+  el('stepRead').style.display = ''; el('yr').parentElement.style.display = '';
+  syncRail(); syncStageSize();
+  if (S.chapters){ showNav(true); await applyChapter(0); return; }
+  LAY = null; showNav(false); syncKeys(); el('lamRead').style.display = '';
+  setLam(parseFloat(el('lam').value));
+  setP(0);
+  fitView();
+  if (clearGraphColumn()) fitView();
+  playing = true; el('play').textContent = 'Pause'; last = performance.now(); acc = 0;
+}
+
+el('play').addEventListener('click', () => {
+  playing = !playing; el('play').textContent = playing ? 'Pause' : 'Play'; last = performance.now();
+});
+el('restart').addEventListener('click', () => { setP(0); playing = true; el('play').textContent = 'Pause'; });
+el('scrub').addEventListener('input', e => { playing = false; el('play').textContent = 'Play'; setP(parseFloat(e.target.value)); });
+el('lam').addEventListener('input', e => setLam(parseFloat(e.target.value)));
+el('lam').addEventListener('change', () => { if (yMode === 'env') refreshScale(); });
+el('yr').addEventListener('change', e => { yMode = e.target.value; refreshScale(); });
+
+let scaling = false;
+async function refreshScale(){
+  if (scaling || !S) return; scaling = true;
+  const before = VIS;
+  setScale();
+  if (VIS !== before || yMode !== 'env'){
+    if (frame) model.remove(frame);
+    await buildFrame();
+    setLam(parseFloat(el('lam').value));
+    fitView();
+    if (clearGraphColumn()) fitView();
+  }
+  scaling = false;
+}
+
+let busy = false;
+let CH = 0;
+function syncKeys(){
+  document.querySelectorAll('#keys .key[data-lay]').forEach(k => {
+    const l = k.dataset.lay;
+    const avail = (l === 'band' || l === 'fv') ? !!(S && S.bands)
+      : (l === 'triples' || l === 'hyper' || l === 'union') ? !!(S && S.hyper) : true;
+    k.style.display = (avail && on(l)) ? '' : 'none';
+  });
+}
+function showNav(v){
+  for (const id of ['chPrev','chNext','chDots']) el(id).style.display = v ? '' : 'none';
+  el('stepno').style.display = v ? '' : 'none';
+  el('head').style.display = v ? 'none' : '';   // in step mode the card carries what matters
+}
+async function applyChapter(i){
+  const ch = S.chapters[i]; CH = i;
+  LAY = new Set(ch.layers);
+  yMode = ch.y || 'env'; el('yr').value = yMode; setScale();
+  if (frame) model.remove(frame);
+  await buildFrame();
+
+  el('stepno').textContent = 'Step ' + (i + 1) + ' / ' + S.chapters.length + '  ·  ' + ch.tag;
+  el('sceneTitle').innerHTML = ch.title;
+  el('sceneDefs').innerHTML = '';
+  el('sceneNote').innerHTML = ch.line ? '<div class="stepline">' + ch.line + '</div>' : '';
+  el('scene2').style.display = 'none';
+  el('chDots').innerHTML = S.chapters
+    .map((c, j) => '<i class="' + (j === i ? 'on' : '') + '" data-i="' + j + '"></i>').join('');
+  el('chPrev').style.opacity = i === 0 ? 0.35 : 1;
+  el('chNext').textContent = i === S.chapters.length - 1 ? 'Step 1 ›' : 'Next ›';
+  el('lamRead').style.display = LAY.has('env') ? '' : 'none';
+  el('stepRead').style.display = ch.noplot ? 'none' : '';
+  el('yr').parentElement.style.display = ch.noplot ? 'none' : '';
+  syncKeys();
+  await MathJax.typesetPromise([el('title')]);
+
+  setLam(parseFloat(el('lam').value));
+  syncRail(); syncStageSize();
+  setP(ch.play ? 0 : (ch.p !== undefined ? ch.p : S.K));
+  playing = !!ch.play; el('play').textContent = playing ? 'Pause' : 'Play';
+  last = performance.now(); acc = 0;
+  fitView();
+  if (clearGraphColumn()) fitView();
+}
+let chBusy = false;
+async function gotoChapter(i){
+  if (chBusy || !S.chapters) return;
+  chBusy = true;
+  await applyChapter((i + S.chapters.length) % S.chapters.length);
+  chBusy = false;
+}
+el('chPrev').addEventListener('click', () => gotoChapter(CH - 1));
+el('chNext').addEventListener('click', () => gotoChapter(CH + 1));
+el('chDots').addEventListener('click', e => { const d = e.target.closest('i'); if (d) gotoChapter(+d.dataset.i); });
+addEventListener('keydown', e => {
+  if (!S || !S.chapters) return;
+  if (e.key === 'ArrowRight'){ e.preventDefault(); gotoChapter(CH + 1); }
+  if (e.key === 'ArrowLeft'){ e.preventDefault(); gotoChapter(CH - 1); }
+});
+
+async function switchTo(which){
+  if (busy) return; busy = true;
+  el('viewWalk').classList.toggle('sel', which === 'walk');
+  el('viewLemma').classList.toggle('sel', which === 'lemma');
+  await loadScene(which === 'walk' ? walkScene() : lemmaScene());
+  busy = false;
+}
+el('viewWalk').addEventListener('click', () => switchTo('walk'));
+el('viewLemma').addEventListener('click', () => switchTo('lemma'));
+
+window.__setP = v => { playing = false; el('play').textContent = 'Play'; setP(v); };
+window.__switch = switchTo;
+
+addEventListener('resize', () => { if (!userMoved) fitView(); });
+function syncRail(){ el('title').style.bottom = (el('bar').offsetHeight + 12) + 'px'; }
+// the stage can boot before layout, leaving a 1x1 renderer; re-size it whenever the host disagrees
+function syncStageSize(){
+  const r = stage._renderer, cam = stage._camera;
+  if (!r || !cam) return false;
+  const w = stage.clientWidth, hh = stage.clientHeight;
+  if (!w || !hh) return false;
+  const c = r.domElement;
+  if (Math.abs(c.clientWidth - w) > 1 || Math.abs(c.clientHeight - hh) > 1){
+    r.setSize(w, hh, true);
+    cam.aspect = w / hh; cam.updateProjectionMatrix();
+    return true;
+  }
+  return false;
+}
+function relayout(){
+  syncRail();
+  const resized = syncStageSize();
+  if ((resized || !userMoved) && S && frame){
+    if (fitView() && clearGraphColumn()) fitView();
+  }
+}
+// the stage and the bar settle long after every one-shot pass, and rAF is suspended while the
+// document is hidden — so the guard runs on a timer, which keeps ticking in a background tab
+function layoutGuard(){
+  const c = stage._renderer && stage._renderer.domElement;
+  const railOff = false;
+  const sizeOff = c && stage.clientWidth > 50 && Math.abs(c.clientWidth - stage.clientWidth) > 1;
+  if (railOff || sizeOff) relayout();
+}
+setInterval(layoutGuard, 500);
+document.addEventListener('visibilitychange', () => relayout());
+
+syncRail();
+requestAnimationFrame(relayout);
+setTimeout(relayout, 300);
+setTimeout(relayout, 1000);
+new ResizeObserver(() => relayout()).observe(el('bar'));
+new ResizeObserver(() => relayout()).observe(stage);
+addEventListener('resize', relayout);
+if (document.fonts) document.fonts.ready.then(relayout);
+
+await loadScene(walkScene());
+
+(function tick(now){
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  // persistent layout guard: the stage and the bar can settle after every one-shot pass has run
+  if ((tick.n = (tick.n || 0) + 1) % 20 === 0) layoutGuard();
+  if (playing){
+    acc += dt;
+    if (acc > 1 / 30){
+      setP(p + acc * S.rate); acc = 0;
+      if (p >= S.K){ playing = false; el('play').textContent = 'Play'; }
+    }
+  }
+  requestAnimationFrame(tick);
+})(performance.now());
+</script>
+</body>
+</html>
